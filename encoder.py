@@ -18,7 +18,7 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.bsize = 400
         self.word_emb_dim = 300
-        self.enc_gru_dim =1000
+        self.enc_gru_dim = 1200
         self.version = 1
         self.word_vec = {}
 
@@ -184,7 +184,7 @@ class Encoder(nn.Module):
 
         return sentences, lengths, idx_sort
 
-    def encode(self, sentences, bsize=64, tokenize=True, verbose=False):
+    def encode(self, sentences, bsize, tokenize=True, verbose=False):
         tic = time.time()
         sentences, lengths, idx_sort = self.prepare_samples(
                         sentences, bsize, tokenize, verbose)
