@@ -23,7 +23,10 @@ print(scores)
 scores_sum = np.sum(scores, axis=1, keepdims=True)
 
 scores = scores/scores_sum
-np.fill_diagonal(scores, 0)
+#np.fill_diagonal(scores, 0)
+
+scores = torch.from_numpy(scores)
+scores.requires_grad = True
 
 print(scores)
 
@@ -36,10 +39,23 @@ for ctxt in ctxt_sent_pos:
     targets += np.eye(3, k=ctxt)
 targets_sum = np.sum(targets,axis=1, keepdims=True)
 targets = targets / targets_sum
+
+targets = torch.from_numpy(targets)
 print(targets)
 
+
+def xentropy_cost(pred, target):
+
+    logged = torch.log(pred)
+    a = target.float()*logged
+    print(a)
+    cost = -torch.sum(a)
+    print(cost)
+    return cost
+
 loss_fn = nn.CrossEntropyLoss()
+
 optimizer = optim.Adam(f.parameters(), lr=0.0005)
-loss = loss_fn(scores, targets)
+loss = xentropy_cost(scores, targets)
 loss.backward()
 optimizer.step()

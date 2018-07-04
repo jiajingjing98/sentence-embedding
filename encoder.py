@@ -33,6 +33,8 @@ class Encoder(nn.Module):
             self.moses_tok = False
 
 
+
+
     def forward(self, sent_tuple):
         # sent_len: [max_len, ..., min_len] (bsize)
         # sent: Variable(seqlen x bsize x worddim)
