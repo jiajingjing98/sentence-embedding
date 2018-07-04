@@ -193,15 +193,14 @@ class Encoder(nn.Module):
 
         embeddings = []
         for stidx in range(0, len(sentences), bsize):
-            with torch.no_grad():
-                batch = Variable(self.get_batch(
+            batch = Variable(self.get_batch(
                         sentences[stidx:stidx + bsize]))
-
-            print(batch.size())
             batch = self.forward(
                 (batch, lengths[stidx:stidx + bsize])).data.cpu().numpy()
             embeddings.append(batch)
+        print("before", embeddings)
         embeddings = np.vstack(embeddings)
+        print("after", embeddings)
 
         # unsort
         idx_unsort = np.argsort(idx_sort)

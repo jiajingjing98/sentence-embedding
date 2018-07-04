@@ -1,7 +1,7 @@
 
 W2V_PATH = "/home/jingjing/Desktop/InferSent-master/dataset/GloVe/glove.840B.300d.txt"
 
-from encoder import Encoder
+from newencoder import Encoder
 import torch
 import numpy as np
 import torch.nn as nn
@@ -15,20 +15,10 @@ f.zero_grad()
 
 f.set_w2v_path(W2V_PATH)
 f.build_vocab(sentences, True)
-embeddings = f.encode(sentences, bsize=400, tokenize=False, verbose=True)
+scores = f(sentences, bsize=400, tokenize=False, verbose=True)
+print(scores.requires_grad)
 
-print(embeddings)
-scores = np.matmul(embeddings,np.transpose(embeddings))
-print(scores)
-scores_sum = np.sum(scores, axis=1, keepdims=True)
 
-scores = scores/scores_sum
-#np.fill_diagonal(scores, 0)
-
-scores = torch.from_numpy(scores)
-scores.requires_grad = True
-
-print(scores)
 
 targets = np.zeros((3,3))
 context_size = 1
@@ -41,7 +31,7 @@ targets_sum = np.sum(targets,axis=1, keepdims=True)
 targets = targets / targets_sum
 
 targets = torch.from_numpy(targets)
-print(targets)
+
 
 
 def xentropy_cost(pred, target):
@@ -53,10 +43,11 @@ def xentropy_cost(pred, target):
     print(cost)
     return cost
 
+weight = torch.FloatTensor(3).fill_(1)
 loss_fn = nn.functional.binary_cross_entropy_with_logits
 
 optimizer = optim.Adam(f.parameters(), lr=0.0005)
-loss = loss_fn(scores, targets.float())
+loss = loss_fn(scores, targets.float(), weight=weight)
 print(loss)
 loss.backward()
 optimizer.step()
