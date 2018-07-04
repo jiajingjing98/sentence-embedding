@@ -53,9 +53,10 @@ def xentropy_cost(pred, target):
     print(cost)
     return cost
 
-loss_fn = nn.CrossEntropyLoss()
+loss_fn = nn.functional.binary_cross_entropy_with_logits
 
 optimizer = optim.Adam(f.parameters(), lr=0.0005)
-loss = xentropy_cost(scores, targets)
+loss = loss_fn(scores, targets.float())
+print(loss)
 loss.backward()
 optimizer.step()
