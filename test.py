@@ -6,19 +6,17 @@ import numpy as np
 import torch.nn as nn
 from torch import optim
 from torch.autograd import Variable
+import torch.nn.functional as F
 
 f = Encoder()
-sentences = ['Memories of childhood are unforgettable.', 'I was four years old when my grandfather died.',
-             'I clearly remember how everybody in the house was weeping.']
+sentences = ['The Moon is filled wit craters.', 'It has no light of its own.', 'It gets its light from the Sun.']
+
+data = [['Memories of childhood are unforgettable.', 'I was four years old when my grandfather died.',
+             'I clearly remember how everybody in the house was weeping.'], ['Today is sunny', 'We should go out for a picnic.', 'Love the weather.']]
 
 f.zero_grad()
 
 f.set_w2v_path(W2V_PATH)
-f.build_vocab(sentences, True)
-
-embeddings = f.encode(sentences, 3)
-
-print(embeddings.size())
 
 targets = np.zeros((3,3))
 context_size = 1
@@ -30,16 +28,38 @@ for ctxt in ctxt_sent_pos:
 targets_sum = np.sum(targets,axis=1, keepdims=True)
 targets = targets / targets_sum
 
+print(targets)
+
 targets = torch.from_numpy(targets)
 
 optimizer = optim.Adam(f.parameters(), lr=0.0005)
 
 
-loss_fn = nn.L1Loss()
-loss = loss_fn(embeddings, targets.float())
-print(loss)
-loss.backward()
-optimizer.step()
+def loss_fn(pred, target):
+    m = nn.Softmax(-1)
+    s_pred = m(pred)
+    losses = F.binary_cross_entropy_with_logits(s_pred, target)
+    return losses
 
-for i in f.parameters():
-    print("here", i.grad)
+with torch.no_grad():
+    f.build_vocab(sentences, True)
+    embeddings = f.encode(sentences, 3)
+    loss = loss_fn(embeddings, targets.float())
+    print("loss before training: ", loss)
+
+for epoch in range(20):
+    for instance in data:
+        optimizer.zero_grad()
+        if epoch==0:
+            f.build_vocab(instance, True)
+        scores = f.encode(instance, 3)
+        loss = loss_fn(scores, targets.float())
+        print(loss)
+        loss.backward()
+        optimizer.step()
+
+with torch.no_grad():
+    f.build_vocab(sentences, True)
+    embeddings = f.encode(sentences, 3)
+    loss = loss_fn(embeddings, targets.float())
+    print("loss after training: ", loss)
