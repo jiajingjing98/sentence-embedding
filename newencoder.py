@@ -1,5 +1,6 @@
 
 
+
 W2V_PATH = "/home/jingjing/Desktop/InferSent-master/dataset/GloVe/glove.840B.300d.txt"
 
 
@@ -35,14 +36,14 @@ class Encoder(nn.Module):
 
 
 
-    def helper(self, sent_tuple):
+    def forward(self, sent_tuple):
         # sent_len: [max_len, ..., min_len] (bsize)
         # sent: Variable(seqlen x bsize x worddim)
         sent, sent_len = sent_tuple
 
         # Sort by length (keep idx)
 
-        bsize = sent.size(1)
+        bsize = 3
 
         self.init_gru = self.init_gru if bsize == self.init_gru.size(1) else \
             Variable(torch.FloatTensor(2, bsize, self.enc_gru_dim).zero_())
@@ -60,6 +61,8 @@ class Encoder(nn.Module):
         idx_unsort = np.argsort(idx_sort)
 
         emb = emb.index_select(0, Variable(torch.LongTensor(idx_unsort)))
+
+
 
         return emb
 
@@ -143,6 +146,7 @@ class Encoder(nn.Module):
     def get_batch(self, batch):
         # sent in batch in decreasing order of lengths
         # batch: (bsize, max_len, word_dim)
+        lengths = np.array([len(x) for x in batch])
         embed = np.zeros((len(batch[0]), len(batch), self.word_emb_dim))
         for i in range(len(batch)):
             for j in range(len(batch[i])):
@@ -186,44 +190,23 @@ class Encoder(nn.Module):
 
         return sentences, lengths, idx_sort
 
-    def forward(self, sentences, bsize, tokenize=True, verbose=False):
+    def encode(self, sentences, bsize, tokenize=True, verbose=False):
         tic = time.time()
         sentences, lengths, idx_sort = self.prepare_samples(
                         sentences, bsize, tokenize, verbose)
 
-        embeddings = Variable()
-        embeddings.requires_grad = True
+        embeddings = torch.FloatTensor()
         for stidx in range(0, len(sentences), bsize):
             batch = Variable(self.get_batch(
-                        sentences[stidx:stidx + bsize]), requires_grad=True)
-            batch = self.helper(
-                (batch, lengths[stidx:stidx + bsize])).data.cpu()
-
-            embeddings = torch.cat((embeddings, batch), 0)
-
-        #embeddings = np.vstack(embeddings)
+                        sentences[stidx:stidx + bsize]))
+            batch = self.forward(
+                (batch, lengths[stidx:stidx + bsize]))
+            embeddings = torch.cat((embeddings, batch))
 
 
-        # unsort
-        #idx_unsort = np.argsort(idx_sort)
-        #embeddings = embeddings[idx_unsort]
 
         if verbose:
             print('Speed : %.1f sentences/s (%s mode, bsize=%s)' % (
                     len(embeddings)/(time.time()-tic),
                      'cpu', bsize))
-
-        #scores = np.matmul(embeddings, np.transpose(embeddings))
-        #scores_sum = np.sum(scores, axis=1, keepdims=True)
-        #scores = scores / scores_sum
-        #scores = torch.from_numpy(scores)
-
-        scores = Variable(torch.mm(embeddings, torch.transpose(embeddings, 0, 1)), requires_grad=True)
-        scores_sum = torch.sum(scores, dim=1, keepdim=True)
-        scores = scores / scores_sum
-
-        return scores
-
-
-
-
+        return embeddings

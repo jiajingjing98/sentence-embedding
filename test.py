@@ -1,4 +1,3 @@
-
 W2V_PATH = "/home/jingjing/Desktop/InferSent-master/dataset/GloVe/glove.840B.300d.txt"
 
 from encoder import Encoder
@@ -17,20 +16,9 @@ f.zero_grad()
 f.set_w2v_path(W2V_PATH)
 f.build_vocab(sentences, True)
 
-sentences, lengths, idx_sort = f.prepare_samples(
-                        sentences, 3, True, False)
+embeddings = f.encode(sentences, 3)
 
-
-stidx = 0
-batch, leng = f.get_batch(
-                        sentences[stidx:stidx + 400])
-batch = Variable(batch)
-output = f((batch, lengths[stidx:stidx + 400]))
-output = torch.mm(output, torch.transpose(output, 0, 1))
-
-print(output.size())
-
-
+print(embeddings.size())
 
 targets = np.zeros((3,3))
 context_size = 1
@@ -44,17 +32,14 @@ targets = targets / targets_sum
 
 targets = torch.from_numpy(targets)
 
-
-
 optimizer = optim.Adam(f.parameters(), lr=0.0005)
 
 
 loss_fn = nn.L1Loss()
+loss = loss_fn(embeddings, targets.float())
+print(loss)
+loss.backward()
+optimizer.step()
 
-for i in range(10):
-    output = f((batch, lengths[stidx:stidx + 400]))
-    output = torch.mm(output, torch.transpose(output, 0, 1))
-    loss = loss_fn(output, targets.float())
-    print(loss)
-    loss.backward()
-    optimizer.step()
+for i in f.parameters():
+    print("here", i.grad)

@@ -42,7 +42,7 @@ class Encoder(nn.Module):
 
         # Sort by length (keep idx)
 
-        bsize = sent.size(1)
+        bsize = 3
 
         self.init_gru = self.init_gru if bsize == self.init_gru.size(1) else \
             Variable(torch.FloatTensor(2, bsize, self.enc_gru_dim).zero_())
@@ -60,6 +60,8 @@ class Encoder(nn.Module):
         idx_unsort = np.argsort(idx_sort)
 
         emb = emb.index_select(0, Variable(torch.LongTensor(idx_unsort)))
+
+
 
         return emb
 
@@ -143,6 +145,7 @@ class Encoder(nn.Module):
     def get_batch(self, batch):
         # sent in batch in decreasing order of lengths
         # batch: (bsize, max_len, word_dim)
+        lengths = np.array([len(x) for x in batch])
         embed = np.zeros((len(batch[0]), len(batch), self.word_emb_dim))
         for i in range(len(batch)):
             for j in range(len(batch[i])):
@@ -191,25 +194,26 @@ class Encoder(nn.Module):
         sentences, lengths, idx_sort = self.prepare_samples(
                         sentences, bsize, tokenize, verbose)
 
-        embeddings = []
+        embeddings = torch.FloatTensor()
         for stidx in range(0, len(sentences), bsize):
             batch = Variable(self.get_batch(
                         sentences[stidx:stidx + bsize]))
             batch = self.forward(
-                (batch, lengths[stidx:stidx + bsize])).data.cpu().numpy()
-            embeddings.append(batch)
-        print("before", embeddings)
-        embeddings = np.vstack(embeddings)
-        print("after", embeddings)
+                (batch, lengths[stidx:stidx + bsize]))
+            embeddings = torch.cat((embeddings, batch))
+
 
         # unsort
-        idx_unsort = np.argsort(idx_sort)
-        embeddings = embeddings[idx_unsort]
+        idx_unsort = torch.from_numpy(np.argsort(idx_sort))
+        embeddings = embeddings.index_select(0, Variable(idx_unsort))
 
         if verbose:
             print('Speed : %.1f sentences/s (%s mode, bsize=%s)' % (
                     len(embeddings)/(time.time()-tic),
                      'cpu', bsize))
+
+
+        embeddings = torch.mm(embeddings, torch.transpose(embeddings, 0, 1))
         return embeddings
 
 
