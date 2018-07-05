@@ -41,8 +41,7 @@ class Encoder(nn.Module):
         sent, sent_len = sent_tuple
 
         # Sort by length (keep idx)
-
-        bsize = 3
+        bsize = len(sent_len)
 
         self.init_gru = self.init_gru if bsize == self.init_gru.size(1) else \
             Variable(torch.FloatTensor(2, bsize, self.enc_gru_dim).zero_())
@@ -110,6 +109,7 @@ class Encoder(nn.Module):
 
                 if k > K and all([w in word_vec for w in [self.bos, self.eos]]):
                     break
+
         return word_vec
 
     def build_vocab(self, sentences, tokenize=True):

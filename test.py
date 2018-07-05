@@ -8,6 +8,7 @@ from torch import optim
 from torch.autograd import Variable
 import torch.nn.functional as F
 
+
 f = Encoder()
 sentences = ['The Moon is filled wit craters.', 'It has no light of its own.', 'It gets its light from the Sun.']
 
