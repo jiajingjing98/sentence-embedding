@@ -196,15 +196,12 @@ class Encoder(nn.Module):
 
         embeddings = torch.FloatTensor()
         for stidx in range(0, len(sentences), bsize):
-            batch = Variable(self.get_batch(
+            with torch.no_grad():
+                batch = Variable(self.get_batch(
                         sentences[stidx:stidx + bsize]))
             batch = self.forward(
-                (batch, lengths[stidx:stidx + bsize])).data.cpu().numpy()
-            print("new", batch)
+                (batch, lengths[stidx:stidx + bsize]))
             embeddings = torch.cat((embeddings, batch))
-
-        print("new encoder before unsort ", embeddings)
-
 
         # unsort
         idx_unsort = torch.from_numpy(np.argsort(idx_sort))
@@ -216,10 +213,8 @@ class Encoder(nn.Module):
                      'cpu', bsize))
 
 
-        #embeddings = torch.mm(embeddings, torch.transpose(embeddings, 0, 1))
-        
-        
-        
+        embeddings = torch.mm(embeddings, torch.transpose(embeddings, 0, 1))
+
         return embeddings
 
 
