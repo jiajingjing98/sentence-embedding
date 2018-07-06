@@ -41,7 +41,7 @@ class Encoder(nn.Module):
         sent, sent_len = sent_tuple
 
         # Sort by length (keep idx)
-        bsize = len(sent_len)
+        bsize = sent.size(1)
 
         self.init_gru = self.init_gru if bsize == self.init_gru.size(1) else \
             Variable(torch.FloatTensor(2, bsize, self.enc_gru_dim).zero_())
@@ -199,8 +199,11 @@ class Encoder(nn.Module):
             batch = Variable(self.get_batch(
                         sentences[stidx:stidx + bsize]))
             batch = self.forward(
-                (batch, lengths[stidx:stidx + bsize]))
+                (batch, lengths[stidx:stidx + bsize])).data.cpu().numpy()
+            print("new", batch)
             embeddings = torch.cat((embeddings, batch))
+
+        print("new encoder before unsort ", embeddings)
 
 
         # unsort
@@ -213,7 +216,10 @@ class Encoder(nn.Module):
                      'cpu', bsize))
 
 
-        embeddings = torch.mm(embeddings, torch.transpose(embeddings, 0, 1))
+        #embeddings = torch.mm(embeddings, torch.transpose(embeddings, 0, 1))
+        
+        
+        
         return embeddings
 
 
