@@ -11,27 +11,6 @@ from torch.autograd import Variable
 import torch.nn as nn
 
 
-class QTModel(nn.Module):
-    def __init__(self):
-        super(QTModel, self).__init__()
-        self.f = Encoder()
-        self.g = Encoder()
-
-    def forward(self, sentences, bsize, tokenize=True, verbose=False):
-        e1 = self.f.encode(sentences, bsize, tokenize, verbose)
-        e2 = self.g.encode(sentences, bsize, tokenize, verbose)
-        embs = torch.mm(e1, torch.transpose(e2, 0, 1))
-        return embs
-
-    def build_vocab(self, sentences, tokenize=True):
-        self.f.build_vocab(sentences, tokenize)
-        self.g.build_vocab(sentences, tokenize)
-
-    def set_w2v_path(self, w2v_path):
-        self.f.w2v_path = w2v_path
-        self.g.w2v_path = w2v_path
-
-
 class Encoder(nn.Module):
 
     def __init__(self):
@@ -235,8 +214,7 @@ class Encoder(nn.Module):
                      'cpu', bsize))
 
 
-        #embeddings = torch.mm(embeddings, torch.transpose(embeddings, 0, 1))
+        embeddings = torch.mm(embeddings, torch.transpose(embeddings, 0, 1))
 
         return embeddings
-
 
