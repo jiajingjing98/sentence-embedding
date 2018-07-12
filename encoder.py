@@ -82,8 +82,6 @@ class Encoder(nn.Module):
 
         emb = emb.index_select(0, Variable(torch.LongTensor(idx_unsort)))
 
-
-
         return emb
 
 
