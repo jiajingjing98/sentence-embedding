@@ -35,7 +35,7 @@ class QTModel(nn.Module):
 class Encoder(nn.Module):
 
     def __init__(self):
-        torch.manual_seed(0)
+        #torch.manual_seed(0)
         super(Encoder, self).__init__()
         self.bsize = 400
         self.word_emb_dim = 300
