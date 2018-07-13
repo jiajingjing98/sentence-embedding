@@ -209,7 +209,7 @@ class Encoder(nn.Module):
 
         return sentences, lengths, idx_sort
 
-    def encode(self, sentences, bsize, tokenize=True, verbose=False):
+    def encode(self, sentences, bsize, tokenize=True, verbose=False, eval=False):
         tic = time.time()
         sentences, lengths, idx_sort = self.prepare_samples(
                         sentences, bsize, tokenize, verbose)
@@ -231,7 +231,6 @@ class Encoder(nn.Module):
             print('Speed : %.1f sentences/s (%s mode, bsize=%s)' % (
                     len(embeddings)/(time.time()-tic),
                      'cpu', bsize))
-
 
         #embeddings = torch.mm(embeddings, torch.transpose(embeddings, 0, 1))
 
