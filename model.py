@@ -12,7 +12,7 @@ import torch.nn as nn
 
 
 class QTModel(nn.Module):
-    def __init__(self):
+    def __init__(self, gpu_id):
         super(QTModel, self).__init__()
         self.f = Encoder()
         self.g = Encoder()
@@ -46,7 +46,7 @@ class Encoder(nn.Module):
         self.enc_gru = nn.GRU(self.word_emb_dim, self.enc_gru_dim, 1,
                                 bidirectional=True)
         self.init_gru = Variable(torch.FloatTensor(2, self.bsize,
-                                                    self.enc_gru_dim).zero_())
+                                                    self.enc_gru_dim).zero_()).cuda()
 
         if self.version == 1:
             self.bos = '<s>'
@@ -66,11 +66,11 @@ class Encoder(nn.Module):
         bsize = sent.size(1)
 
         self.init_gru = self.init_gru if bsize == self.init_gru.size(1) else \
-            Variable(torch.FloatTensor(2, bsize, self.enc_gru_dim).zero_())
+            Variable(torch.cuda.FloatTensor(2, bsize, self.enc_gru_dim).zero_())
 
         # Sort by length (keep idx)
         sent_len, idx_sort = np.sort(sent_len)[::-1], np.argsort(-sent_len)
-        sent = sent.index_select(1, Variable(torch.LongTensor(idx_sort)))
+        sent = sent.index_select(1, Variable(torch.cuda.LongTensor(idx_sort)))
 
         # Handling padding in Recurrent Networks
         sent_packed = nn.utils.rnn.pack_padded_sequence(sent, sent_len)
@@ -80,7 +80,7 @@ class Encoder(nn.Module):
         # Un-sort by length
         idx_unsort = np.argsort(idx_sort)
 
-        emb = emb.index_select(0, Variable(torch.LongTensor(idx_unsort)))
+        emb = emb.index_select(0, Variable(torch.cuda.LongTensor(idx_unsort)))
 
         return emb
 
@@ -218,13 +218,13 @@ class Encoder(nn.Module):
         for stidx in range(0, len(sentences), bsize):
             with torch.no_grad():
                 batch = Variable(self.get_batch(
-                        sentences[stidx:stidx + bsize]))
+                        sentences[stidx:stidx + bsize]).cuda())
             batch = self.forward(
                 (batch, lengths[stidx:stidx + bsize]))
             embeddings = torch.cat((embeddings, batch))
 
         # unsort
-        idx_unsort = torch.from_numpy(np.argsort(idx_sort))
+        idx_unsort = torch.cuda.from_numpy(np.argsort(idx_sort))
         embeddings = embeddings.index_select(0, Variable(idx_unsort))
 
         if verbose:

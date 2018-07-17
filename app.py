@@ -17,7 +17,7 @@ f = QTModel()
 
 
 sentences = ['The Moon is filled wit craters.', 'It has no light of its own.', 'It gets its light from the Sun.']
-with open('./try.txt', 'r') as in_file:
+with open('./big.txt', 'r') as in_file:
     text = in_file.read()
     sents = ST(text)
 
